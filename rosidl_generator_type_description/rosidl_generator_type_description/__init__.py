@@ -157,6 +157,7 @@ def generate_type_hash(generator_arguments_file: str) -> List[str]:
         process_include = pending_includes.pop()
         p_path = process_include.with_suffix('.json')
         pkg = p_path.parts[0]
+        print(pkg)
         pkg_dir = include_map[pkg]
         include_path = pkg_dir / p_path.relative_to(pkg)
         with include_path.open('r') as include_file:
