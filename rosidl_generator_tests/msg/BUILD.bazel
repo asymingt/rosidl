@@ -1,4 +1,3 @@
-
 # Copyright 2025 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Package information
-        
-module(
-    name = "rosidl_adapter",
-    version = "5.0.0",
-    compatibility_level = 1,
+load("@ros//:defs.bzl", "ros_interface")
+
+package(default_visibility = ["//visibility:public"])
+
+ros_interface(
+    name = "SmallConstant",
+    src = "SmallConstant.msg",
 )
-
-# Dependencies
-
-bazel_dep(name = "rules_cc", version = "0.1.4")
-bazel_dep(name = "rules_python", version = "1.5.1")
-
-bazel_dep(name = "ros", version = "0.0.0")
-bazel_dep(name = "rosidl_cli", version = "0.0.0")
-bazel_dep(name = "service_msgs", version = "0.0.0")

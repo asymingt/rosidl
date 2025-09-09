@@ -54,7 +54,7 @@ py_library(
         name = test,
         srcs = ["test/parse_msg_files.py"] + ["test/{}.py".format(test)],
         python_version = "PY3",
-        data = glob(["test/data/**"]),
+#        data = glob(["test/data/**"]),
         deps = [
             "@rules_python//python/runfiles",
             "@rosidl_cli",
