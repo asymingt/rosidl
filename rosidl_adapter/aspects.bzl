@@ -21,11 +21,18 @@ load(":types.bzl", "RosIdlInfo")
 #   src          : path to input interface relative to Bazel working dir
 #   dst          : path to output idl relative to Bazel working dir
 def _generate(ctx, executable, package_name, src, dst, mnemonic):
-    ctx.actions.run(
+    ctx.actions.run_shell(
+        command = "{exec} -p {src_dir} -n {pkg} {src_name} {dst_dir} {out}".format(
+            exec = executable.path,
+            src_dir = src.dirname,
+            pkg = package_name,
+            src_name = src.basename,
+            dst_dir = dst.dirname,
+            out = "> /dev/null 2>&1"
+        ),
+        tools = [executable],
         inputs = [src],
         outputs = [dst],
-        executable = executable,
-        arguments = ['-p', src.dirname, '-n', package_name, src.basename, dst.dirname],
         mnemonic = mnemonic,
         progress_message = "Generating IDL files for {}".format(ctx.label.name),
     )

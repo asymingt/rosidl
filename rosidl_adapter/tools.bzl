@@ -87,11 +87,16 @@ def generate_sources(
     )
 
     # Pass the query through the generator
-    ctx.actions.run(
+    ctx.actions.run_shell(
+        command = "{exec} {genfile} {extra} {out}".format(
+            exec = executable.path,
+            genfile = "--generator-arguments-file={}".format(input_args.path),
+            extra = " ".join(additional),
+            out = "> /dev/null 2>&1"
+        ),
+        tools = [executable],
         inputs = input_idls + input_type_descriptions + input_templates + [input_args],
         outputs = output_hdrs + output_srcs,
-        executable = executable,
-        arguments = ["--generator-arguments-file={}".format(input_args.path)] + additional,
         mnemonic = mnemonic,
         progress_message = "Running {} for {}".format(mnemonic, ctx.label.name),
     )
