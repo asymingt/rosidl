@@ -1,4 +1,3 @@
-
 # Copyright 2025 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,41 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@ros//:defs.bzl", "RosInterfaceInfo")
 load("@rules_cc//cc:defs.bzl", "CcInfo", "cc_common")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain")
-load("@ros//:defs.bzl", "RosInterfaceInfo")
-
-# This would be better expressed as a regex operation, but unfortunately Bazel's
-# starlark language does not yet support this, and so it would require a module.
-# For example: https://github.com/magnetde/starlark-re/tree/master
-# https://github.com/ros2/rosidl/blob/humble/rosidl_cmake/cmake/string_camel_case_to_lower_case_underscore.cmake
-def _snake_case_from_pascal_case(pascal_case):
-    result = ""
-    pascal_case_padded = " " + pascal_case + " "
-    for i in range(len(pascal_case)):
-        prev_char, char, next_char = pascal_case_padded[i:i + 3].elems()
-        if char.isupper() and next_char.islower() and prev_char != " ":
-            # Insert an underscore before any upper case letter which is not
-            # followed by another upper case letter.
-            result += "_"
-        elif char.isupper() and (prev_char.islower() or prev_char.isdigit()):
-            # Insert an underscore before any upper case letter which is
-            # preseded by a lower case letter or number.
-            result += "_"
-        result += char.lower()
-    return result
+load("//:types.bzl", "RosIdlInfo")
 
 def _get_stem(path):
     return path.basename[:-len(path.extension) - 1]
-
-def message_info_from_target(target):
-    index = target.find("__")
-    if index < 0:
-        fail("Target interface {} appears malformed".format(target))
-    message_type = target[:index]
-    message_name = target[index+2:]
-    message_code = _snake_case_from_pascal_case(message_name)
-    return message_type, message_name, message_code
 
 def idl_tuple_from_path(path):
     idl_parts = path.split("/")
@@ -60,6 +31,7 @@ def type_description_tuple_from_path(path):
     return "{}/{}:".format(idl_type, idl_name) + path
 
 def generate_sources(
+    target,
     ctx,
     executable,
     mnemonic,
@@ -72,9 +44,11 @@ def generate_sources(
     additional = [],
     message_is_pascal_case = True
 ):
-    # Get information about this package
-    package_name = ctx.label.repo_name.removesuffix("+")
-    message_type, message_name, message_code = message_info_from_target(ctx.label.name)
+    # Extract message metadata from the IdlInfo provider, where it was calculated.
+    package_name = target[RosIdlInfo].package_name
+    message_type = target[RosIdlInfo].interface_type
+    message_name = target[RosIdlInfo].interface_name
+    message_code = target[RosIdlInfo].interface_code
 
     # Some message generation retains the message case.
     if not message_is_pascal_case:
@@ -167,6 +141,7 @@ def generate_cc_info(ctx, name, hdrs, srcs, include_dirs = [], deps = []):
         public_hdrs = hdrs,
         compilation_contexts = [dep.compilation_context for dep in deps],
         name = name,
+        includes = include_dirs,
     )
 
     # Get a linking context.

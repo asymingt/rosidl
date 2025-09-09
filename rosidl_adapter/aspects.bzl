@@ -30,20 +30,38 @@ def _generate(ctx, executable, package_name, src, dst, mnemonic):
         progress_message = "Generating IDL files for {}".format(ctx.label.name),
     )
 
-def _idl_adapter_aspect_impl(target, ctx):
-    #print("IDL_ROS: @" + ctx.label.repo_name.removesuffix("+") + "//:" +  ctx.label.name)
-    package_name = target.label.workspace_name.removesuffix("+")
+# This would be better expressed as a regex operation, but unfortunately Bazel's
+# starlark language does not yet support this, and so it would require a module.
+# For example: https://github.com/magnetde/starlark-re/tree/master
+def _snake_case_from_pascal_case(pascal_case):
+    result = ""
+    pascal_case_padded = " " + pascal_case + " "
+    for i in range(len(pascal_case)):
+        prev_char, char, next_char = pascal_case_padded[i:i + 3].elems()
+        if char.isupper() and next_char.islower() and prev_char != " ":
+            # Insert an underscore before any upper case letter which is not
+            # followed by another upper case letter.
+            result += "_"
+        elif char.isupper() and (prev_char.islower() or prev_char.isdigit()):
+            # Insert an underscore before any upper case letter which is
+            # preseded by a lower case letter or number.
+            result += "_"
+        result += char.lower()
+    return result
 
+def _idl_adapter_aspect_impl(target, ctx):
     # The last element of the traversal order of the message depset is the current element.
     src = target[RosInterfaceInfo].srcs.to_list()[-1]
 
+    # Calculate the metadata to package alongside the IDL.
+    package_name = target.label.workspace_name.removesuffix("+")    # eg. sensor_msgs
+    interface_type = src.extension                                  # eg. msg
+    interface_name = src.basename[:-len(src.extension) - 1]         # eg. CompressedImage
+    interface_code = _snake_case_from_pascal_case(interface_name)   # eg. compressed_image
+
     # Now, were going to transform the source file (msg, srv, action) to an IDL.
     idl = ctx.actions.declare_file(
-        "{package_name}/{interface_type}/{interface_name}.idl".format(
-            package_name = package_name,
-            interface_type = src.extension,
-            interface_name = src.basename[:-len(src.extension) - 1]
-        )
+        "{}/{}/{}.idl".format(package_name, interface_type, interface_name)
     )
     if src.extension == 'msg':
         _generate(ctx, ctx.executable._msg2idl, package_name, src, idl, "IdlFromMsg")
@@ -60,7 +78,11 @@ def _idl_adapter_aspect_impl(target, ctx):
                 transitive = [
                     dep[RosIdlInfo].idls for dep in ctx.rule.attr.deps if RosIdlInfo in dep
                 ],
-            )
+            ),
+            interface_type = interface_type,
+            interface_name = interface_name,
+            interface_code = interface_code,
+            package_name = package_name,
         ),
     ]
 

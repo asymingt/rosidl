@@ -1,4 +1,3 @@
-
 # Copyright 2025 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +15,10 @@
 RosIdlInfo = provider(
     "Encapsulates IDL information generated for an underlying ROS message.", 
     fields = [
-        "idls",
+        "idls",             # depset() of IDL paths.
+        "interface_type",   # msg
+        "interface_name",   # CompressedImage
+        "interface_code",   # compressed_image
+        "package_name",     # sensor_msgs
     ]
 )

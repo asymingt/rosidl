@@ -26,6 +26,7 @@ def _c_aspect_impl(target, ctx):
 
     # Generate the C bindings
     hdrs, srcs, include_dir = generate_sources(
+        target = target,
         ctx = ctx,
         executable = ctx.executable._c_generator,
         mnemonic = "CGeneration",
@@ -58,8 +59,8 @@ def _c_aspect_impl(target, ctx):
         name = "{}_c".format(ctx.label.name),
         hdrs = hdrs,
         srcs = srcs,
-        include_dirs = [include_dir],
         deps = deps,
+        include_dirs = [include_dir],
     )
 
     # Return a CcInfo provider for the aspect.

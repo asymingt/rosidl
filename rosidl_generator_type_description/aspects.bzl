@@ -14,13 +14,15 @@
 
 load("@ros//:defs.bzl", "RosInterfaceInfo")
 load("@rosidl_adapter//:types.bzl", "RosIdlInfo")
-load("@rosidl_adapter//:tools.bzl", "message_info_from_target", "idl_tuple_from_path")
+load("@rosidl_adapter//:tools.bzl", "idl_tuple_from_path")
 load(":types.bzl", "RosTypeDescriptionInfo")
 load(":tools.bzl", "pkg_name_and_base_from_path")
 
 def _type_description_aspect_impl(target, ctx):
-    package_name = ctx.label.repo_name.removesuffix("+")
-    message_type, message_name, message_code = message_info_from_target(ctx.label.name)
+    package_name = target[RosIdlInfo].package_name
+    message_type = target[RosIdlInfo].interface_type
+    message_name = target[RosIdlInfo].interface_name
+    message_code = target[RosIdlInfo].interface_code
 
     # This is the single file we'll be generating as part of this aspect call.
     output_json = ctx.actions.declare_file(
