@@ -1,4 +1,3 @@
-
 # Copyright 2025 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,21 +17,12 @@
 module(
     name = "rosidl_runtime_c",
     version = "5.0.0",
-    compatibility_level = 1,
+    compatibility_level = 0,
 )
 
 # Dependencies
 
 bazel_dep(name = "googletest", version = "1.17.0")
-bazel_dep(name = "rules_cc", version = "0.1.4")
 bazel_dep(name = "rcutils", version = "7.0.0")
 bazel_dep(name = "rosidl_typesupport_interface", version = "5.0.0")
-
-# bazel_dep(name = "ament_cmake", version = "2.8.4")
-# bazel_dep(name = "ament_cmake_gtest", version = "2.8.4")
-# bazel_dep(name = "ament_cmake_ros_core", version = "0.15.1")
-# bazel_dep(name = "ament_lint_auto", version = "0.20.1")
-# bazel_dep(name = "ament_lint_common", version = "0.20.1")
-# bazel_dep(name = "performance_test_fixture", version = "0.4.0")
-# bazel_dep(name = "rcutils", version = "7.0.0")
-# bazel_dep(name = "rosidl_typesupport_interface", version = "5.0.0")
+bazel_dep(name = "rules_cc", version = "0.2.4")

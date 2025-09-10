@@ -15,12 +15,7 @@
 # Package information
         
 module(
-    name = "rosidl_cli",
+    name = "rosidl_cmake",
     version = "5.0.0",
     compatibility_level = 0,
 )
-
-# Dependencies
-
-bazel_dep(name = "ros", version = "0.0.1")
-bazel_dep(name = "rules_python", version = "1.6.1")
