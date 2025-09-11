@@ -1,3 +1,4 @@
+
 # Copyright 2025 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,26 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rosidl_cmake//:types.bzl", "RosInterfaceInfo")
-load(":types.bzl", "RosIdlInfo")
-load(":aspects.bzl", "idl_aspect")
+load(":types.bzl", "RosInterfaceInfo")
 
-def _idl_ros_library_impl(ctx):
-    files = []
-    for dep in ctx.attr.deps:
-        files.extend(dep[RosIdlInfo].idls.to_list())
-    return [
-        DefaultInfo(files = depset(files)),
-    ]
+def _ros_interface_impl(ctx):
+    return RosInterfaceInfo(
+        srcs = depset(
+            direct = [ctx.file.src],
+            transitive = [
+                dep[RosInterfaceInfo].srcs for dep in ctx.attr.deps
+            ]
+        )
+    )
 
-idl_ros_library = rule(
-    implementation = _idl_ros_library_impl,
+ros_interface = rule(
+    implementation = _ros_interface_impl,
     attrs = {
-        "deps": attr.label_list(
-            aspects = [idl_aspect],
-            providers = [RosInterfaceInfo],
-            allow_files = False,
+        "src": attr.label(
+            allow_single_file = [
+                ".msg",
+                ".srv",
+                ".action"
+            ],
+            mandatory = True,
         ),
+        "deps": attr.label_list(providers = [RosInterfaceInfo]),
     },
-    provides = [DefaultInfo],
+    provides = [RosInterfaceInfo],
 )

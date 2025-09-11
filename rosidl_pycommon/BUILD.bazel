@@ -23,7 +23,7 @@ py_library(
     name = "rosidl_pycommon",
     srcs = glob(["rosidl_pycommon/**/*.py"]),
     deps = [
-        "@ros//python:empy",
+        "@rosdistro//bazel/python:empy",
         "@rosidl_parser"
     ],
 )

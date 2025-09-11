@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@ros//:defs.bzl", "RosInterfaceInfo")
+load("@rosidl_cmake//:types.bzl", "RosInterfaceInfo")
 load(":types.bzl", "RosIdlInfo")
 
 # Calls the tool to generate a .idl file from the interface. Inputs:

@@ -1,3 +1,4 @@
+
 # Copyright 2025 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Package information
-        
-module(
-    name = "rosidl_adapter",
-    version = "5.0.0",
-    compatibility_level = 0,
+RosInterfaceInfo = provider(
+    "Provides info for interface code generation.",
+    fields = {
+        "srcs": "The source defining an interface.",
+    }
 )
-
-# Dependencies
-
-bazel_dep(name = "osrf_pycommon", version = "2.1.4")
-bazel_dep(name = "rosdistro", version = "rolling-2025-09-05")
-bazel_dep(name = "rosidl_cmake", version = "5.0.0")
-bazel_dep(name = "rosidl_cli", version = "5.0.0")
-bazel_dep(name = "rules_cc", version = "0.2.4")
-bazel_dep(name = "rules_python", version = "1.6.1")
-bazel_dep(name = "service_msgs", version = "2.4.1")

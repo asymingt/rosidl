@@ -14,7 +14,7 @@
 # limitations under the License.
 
 load("@rules_cc//cc:defs.bzl", "CcInfo", "cc_common")
-load("@ros//:defs.bzl", "RosInterfaceInfo")
+load("@rosidl_cmake//:types.bzl", "RosInterfaceInfo")
 load("@rosidl_adapter//:aspects.bzl", "idl_aspect")
 load("@rosidl_adapter_proto//:aspects.bzl", "proto_aspect")
 load("@rosidl_generator_c//:aspects.bzl", "c_aspect")
