@@ -21,8 +21,6 @@ load("@rosidl_generator_cpp//:aspects.bzl", "cc_aspect", "cc_files_aspect")
 load("@rosidl_generator_cpp//:types.bzl", "RosCcBindingsInfo")
 load("@rosidl_typesupport_c//:aspects.bzl", "c_typesupport_aspect", "c_typesupport_files_aspect")
 load("@rosidl_typesupport_c//:types.bzl", "RosCTypesupportInfo")
-load("@rosidl_typesupport_cpp//:aspects.bzl", "cc_typesupport_aspect", "cc_typesupport_files_aspect")
-load("@rosidl_typesupport_cpp//:types.bzl", "RosCcTypesupportInfo")
 load(":aspects.bzl", "c_aspect", "c_files_aspect",)
 load(":types.bzl", "RosCBindingsInfo")
 

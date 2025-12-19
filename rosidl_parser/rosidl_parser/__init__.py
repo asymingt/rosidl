@@ -1,1 +1,0 @@
-import rosidl_parser.hook
