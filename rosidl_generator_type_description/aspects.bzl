@@ -34,7 +34,7 @@ def _type_description_aspect_impl(target, ctx):
     )
 
     # However, generating the single file above requires that we generate IDLs
-    # and JSONs for all message that this one depends on. THe way to do this
+    # and JSONs for all message that this one depends on. The way to do this
     # is to recursively call up the tree storing depsets as we go...
     input_idls = target[RosIdlInfo].idls.to_list()
     input_templates = ctx.attr._rosidl_templates[DefaultInfo].files.to_list()

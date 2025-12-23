@@ -22,16 +22,16 @@ load("@rosidl_generator_type_description//:types.bzl", "RosTypeDescriptionInfo")
 load(":types.bzl", "RosCcBindingsInfo", "RosCcBindingsFilesInfo")
 
 def _cc_files_aspect_impl(target, ctx):
-    input_idls = target[RosIdlInfo].idls.to_list()
-    input_type_descriptions = target[RosTypeDescriptionInfo].jsons.to_list()
+    input_idls = target[RosIdlInfo].idls.to_list()[-1]
+    input_type_descriptions = target[RosTypeDescriptionInfo].jsons.to_list()[-1]
 
     hdrs, srcs, include_dir = generate_sources(
         target = target,
         ctx = ctx,
         executable = ctx.executable._cc_generator,
         mnemonic = "CcGeneration",
-        input_idls = input_idls,
-        input_type_descriptions = input_type_descriptions,
+        input_idls = [input_idls],
+        input_type_descriptions = [input_type_descriptions],
         input_templates = ctx.attr._cc_templates[DefaultInfo].files.to_list(),
         templates_hdrs = [
             "{}.hpp",

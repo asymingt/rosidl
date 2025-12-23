@@ -21,8 +21,8 @@ load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolcha
 load(":types.bzl", "RosCBindingsInfo", "RosCBindingsFilesInfo")
 
 def _c_files_aspect_impl(target, ctx):
-    input_idls = target[RosIdlInfo].idls.to_list()
-    input_type_descriptions = target[RosTypeDescriptionInfo].jsons.to_list()
+    input_idls = target[RosIdlInfo].idls.to_list()[-1]
+    input_type_descriptions = target[RosTypeDescriptionInfo].jsons.to_list()[-1]
 
     # Generate the C bindings
     hdrs, srcs, include_dir = generate_sources(
@@ -30,8 +30,8 @@ def _c_files_aspect_impl(target, ctx):
         ctx = ctx,
         executable = ctx.executable._c_generator,
         mnemonic = "CGeneration",
-        input_idls = input_idls,
-        input_type_descriptions = input_type_descriptions,
+        input_idls = [input_idls],
+        input_type_descriptions = [input_type_descriptions],
         input_templates = ctx.attr._c_templates[DefaultInfo].files.to_list(),
         templates_hdrs = [
             "{}.h",
