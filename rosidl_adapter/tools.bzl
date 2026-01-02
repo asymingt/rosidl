@@ -158,7 +158,6 @@ def _get_parent_dir(path):
 
 # Merge headers, sources and deps into a CcInfo provider.
 def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], deps = []):
-
     # Query for the current CC toolchain and feature set.
     cc_toolchain = find_cc_toolchain(ctx)
 
@@ -212,13 +211,14 @@ def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], d
         cc_toolchain = cc_toolchain,
         output_type = "dynamic_library",
         linking_contexts = [linking_context],
+        link_deps_statically = False,  # avoid enormous per-message libs
     )
 
     # Create a readable output product name.
     dynamic_library = ctx.actions.declare_file("lib{}.so".format(name))
     ctx.actions.symlink(
         output = dynamic_library,
-        target_file = linking_outputs.library_to_link.dynamic_library
+        target_file = linking_outputs.library_to_link.dynamic_library,
     )
 
     # Return everything needed to manage compilation
