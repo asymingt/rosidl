@@ -1,4 +1,3 @@
-
 # Copyright 2025 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-RosInterfaceInfo = provider(
-    "Provides info for interface code generation.",
-    fields = {
-        "src": "The source defining an interface.",
-        "package": "The package name",
-    }
+RosCcTypesupportIntrospectionInfo = provider(
+    "Encapsulates type support information for C++ introspection.", 
+    fields = [
+        "cc_info",
+        "dynamic_libraries",
+    ]
 )

@@ -1,4 +1,3 @@
-
 # Copyright 2025 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,44 +12,75 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:defs.bzl", "CcInfo", "cc_common")
+load("@rosidl_adapter//:aspects.bzl", "rosidl_adapter_aspect")
+load("@rosidl_adapter_proto//:aspects.bzl", "rosidl_adapter_proto_aspect")
 load("@rosidl_cmake//:types.bzl", "RosInterfaceInfo")
-load("@rosidl_adapter//:aspects.bzl", "idl_aspect")
-load("@rosidl_adapter_proto//:aspects.bzl", "proto_aspect")
-load("@rosidl_generator_c//:aspects.bzl", "c_aspect", "c_files_aspect")
+load("@rosidl_generator_c//:aspects.bzl", "rosidl_generator_c_aspect")
 load("@rosidl_generator_c//:types.bzl", "RosCBindingsInfo")
-load("@rosidl_generator_type_description//:aspects.bzl", "type_description_aspect")
-load("@rosidl_typesupport_cpp//:aspects.bzl", "cc_typesupport_aspect", "cc_typesupport_files_aspect")
+load("@rosidl_generator_type_description//:aspects.bzl", "rosidl_generator_type_description_aspect")
+load("@rosidl_typesupport_introspection_cpp//:aspects.bzl", "rosidl_typesupport_introspection_cpp_aspect")
+load("@rosidl_typesupport_introspection_cpp//:types.bzl", "RosCcTypesupportIntrospectionInfo")
+load("@rosidl_typesupport_fastrtps_cpp//:aspects.bzl", "rosidl_typesupport_fastrtps_cpp_aspect")
+load("@rosidl_typesupport_fastrtps_cpp//:types.bzl", "RosCcTypesupportFastRTPSInfo")
+load("@rosidl_typesupport_protobuf_cpp//:aspects.bzl", "rosidl_typesupport_protobuf_cpp_aspect")
+load("@rosidl_typesupport_protobuf_cpp//:types.bzl", "RosCcTypesupportProtobufInfo")
+load("@rosidl_typesupport_cpp//:aspects.bzl", "rosidl_typesupport_cpp_aspect")
 load("@rosidl_typesupport_cpp//:types.bzl", "RosCcTypesupportInfo")
+load("@rules_cc//cc:defs.bzl", "CcInfo", "cc_common")
+load(":aspects.bzl", "rosidl_generator_cpp_aspect")
 load(":types.bzl", "RosCcBindingsInfo")
-load(":aspects.bzl", "cc_aspect", "cc_files_aspect")
 
-def _cc_ros_library_impl(ctx):
-    cc_infos = []
+# We need to make sure the final libraries from these providers end up
+# in the runfiles, so that they can be loaded dynamically via dlopen()
+CC_INFO_PROVIDERS = [
+    RosCBindingsInfo,
+    RosCcBindingsInfo,
+    RosCcTypesupportIntrospectionInfo,
+    RosCcTypesupportFastRTPSInfo,
+    RosCcTypesupportProtobufInfo,
+    RosCcTypesupportInfo,
+]
+
+def _cc_ros_library(ctx):
+
+    # Move all the dynamic libraries into one search location.
+    symlinks = {}
+    direct_cc_infos = []
     for dep in ctx.attr.deps:
-        cc_infos.extend([
-            dep[RosCBindingsInfo].cc_info,
-            dep[RosCcBindingsInfo].cc_info,
-            dep[RosCcTypesupportInfo].cc_info,
-        ])
-    return [
-        cc_common.merge_cc_infos(direct_cc_infos = cc_infos),
-    ]
+        for provider in CC_INFO_PROVIDERS:
+            if provider in dep:
+                direct_cc_infos.append(dep[provider].cc_info)
+                for file in dep[provider].dynamic_libraries.to_list():
+                    symlinks["lib" + "/" + file.basename] = file
+
+    # Package up the CcInfo
+    cc_info = cc_common.merge_cc_infos(direct_cc_infos = direct_cc_infos)
+
+    # Package up the runfiles
+    default_info = DefaultInfo(
+        files = depset(direct = symlinks.values()),
+        runfiles = ctx.runfiles(symlinks = symlinks)
+    )
+    
+    return [cc_info, default_info]
 
 cc_ros_library = rule(
-    implementation = _cc_ros_library_impl,
+    implementation = _cc_ros_library,
     attrs = {
         "deps": attr.label_list(
             aspects = [
-                idl_aspect,                     # RosIdlInfo
-                proto_aspect,                   # ProtoInfo, CcInfo
-                type_description_aspect,        # RosTypeDescriptionInfo
-                c_files_aspect,                 # RosCBindingsFilesInfo
-                c_aspect,                       # RosCBindingsInfo
-                cc_files_aspect,                # RosCcBindingsFilesInfo
-                cc_aspect,                      # RosCcBindingsInfo
-                cc_typesupport_files_aspect,    # RosCcTypesupportFilesInfo
-                cc_typesupport_aspect,          # RosCcTypesupportInfo
+                # Adapters
+                rosidl_adapter_aspect,
+                rosidl_generator_type_description_aspect,
+                rosidl_adapter_proto_aspect,
+                # Generators
+                rosidl_generator_c_aspect,
+                rosidl_generator_cpp_aspect,
+                # C++ typesupports
+                rosidl_typesupport_introspection_cpp_aspect,
+                rosidl_typesupport_fastrtps_cpp_aspect,
+                rosidl_typesupport_protobuf_cpp_aspect,
+                rosidl_typesupport_cpp_aspect,
             ],
             providers = [RosInterfaceInfo],
             allow_files = False,
@@ -58,4 +88,3 @@ cc_ros_library = rule(
     },
     provides = [CcInfo],
 )
-

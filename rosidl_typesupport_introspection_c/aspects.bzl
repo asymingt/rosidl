@@ -13,48 +13,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:defs.bzl", "CcInfo")
-load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
+load("@rules_cc//cc:defs.bzl", "CcInfo", "cc_common")
+load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolchain")
 load("@rosidl_cmake//:types.bzl", "RosInterfaceInfo")
 load("@rosidl_adapter//:types.bzl", "RosIdlInfo")
 load("@rosidl_adapter//:tools.bzl", "generate_sources", "generate_compilation_information")
 load("@rosidl_generator_c//:types.bzl", "RosCBindingsInfo")
 load("@rosidl_generator_type_description//:types.bzl", "RosTypeDescriptionInfo")
-load(":types.bzl", "RosCcBindingsInfo")
+load("@rosidl_typesupport_c//:types.bzl", "RosCTypesupportInfo")
+load(":types.bzl", "RosCTypesupportIntrospectionInfo")
 
-def _rosidl_generator_cpp_aspect_impl(target, ctx):
 
-    # Generate source files
+def _rosidl_typesupport_introspection_c_aspect_impl(target, ctx):
     hdrs, srcs, include_dirs = generate_sources(
         target = target,
         ctx = ctx,
-        executable = ctx.executable._cc_generator,
-        mnemonic = "CcGeneration",
+        executable = ctx.executable._c_typesupport_introspection_generator,
+        mnemonic = "CTypeSupportIntrospectionGeneration",
         input_idls = [target[RosIdlInfo].idl],
         input_type_descriptions = target[RosTypeDescriptionInfo].jsons.to_list(),
-        input_templates = ctx.attr._cc_templates[DefaultInfo].files.to_list(),
-        templates_hdrs = [
-            "{}.hpp",
-            "detail/{}__builder.hpp",
-            "detail/{}__struct.hpp",
-            "detail/{}__traits.hpp",
-            "detail/{}__type_support.hpp",
-        ],
-        templates_srcs = [],
-        template_visibility_control = ctx.file._cc_visibility_template,
+        input_templates = ctx.attr._c_typesupport_introspection_templates[DefaultInfo].files.to_list(),
+        templates_hdrs = ["detail/{}__rosidl_typesupport_introspection_c.h"],
+        templates_srcs = ["detail/{}__rosidl_typesupport_introspection_c.c"],
+        template_visibility_control = ctx.file._c_typesupport_introspection_visibility_template,
     )
 
-    # Collect dependencies
-    deps = [dep[CcInfo] for dep in ctx.attr._cc_deps if CcInfo in dep]
+    deps = [dep[CcInfo] for dep in ctx.attr._c_deps if CcInfo in dep]
     for dep in ctx.rule.attr.deps:
-        if RosCcBindingsInfo in dep:
-            deps.append(dep[RosCcBindingsInfo].cc_info)
+        if RosCTypesupportIntrospectionInfo in dep:
+            deps.append(dep[RosCTypesupportIntrospectionInfo].cc_info)
     deps.append(target[RosCBindingsInfo].cc_info)
 
-    # Assemble the CcInfo provider.
     cc_info, dynamic_library = generate_compilation_information(
         ctx = ctx,
-        name = "{}__{}__{}__rosidl_generator_cpp".format(
+        name = "{}__{}__{}__rosidl_typesupport_introspection_c".format(
             target[RosIdlInfo].package_name,
             target[RosIdlInfo].interface_type,
             target[RosIdlInfo].interface_code,
@@ -65,45 +57,44 @@ def _rosidl_generator_cpp_aspect_impl(target, ctx):
         include_dirs = include_dirs,
     )
 
-    # Return the CcInfo wrapped in a RosCBindingsInfo provider.
     return [
-        RosCcBindingsInfo(
+        RosCTypesupportIntrospectionInfo(
             cc_info = cc_info,
             dynamic_libraries = depset(
                 direct = [dynamic_library],
                 transitive = [
-                    dep[RosCcBindingsInfo].dynamic_libraries
+                    dep[RosCTypesupportIntrospectionInfo].dynamic_libraries
                     for dep in ctx.rule.attr.deps
-                    if RosCcBindingsInfo in dep
+                    if RosCTypesupportIntrospectionInfo in dep
                 ],
             ),        
         ),
     ]
 
-rosidl_generator_cpp_aspect = aspect(
-    implementation = _rosidl_generator_cpp_aspect_impl,
+rosidl_typesupport_introspection_c_aspect = aspect(
+    implementation = _rosidl_typesupport_introspection_c_aspect_impl,
     toolchains = use_cc_toolchain(),
     attr_aspects = ["deps"],
     fragments = ["cpp"],
     attrs = {
-        "_cc_generator": attr.label(
-            default = Label("//:cli"),
+        "_c_typesupport_introspection_generator": attr.label(
+            default = Label("@rosidl_typesupport_introspection_c//:cli"),
             executable = True,
             cfg = "exec",
         ),
-        "_cc_templates": attr.label(
-            default = Label("//:interface_templates"),
+        "_c_typesupport_introspection_templates": attr.label(
+            default = Label("@rosidl_typesupport_introspection_c//:interface_templates"),
         ),
-        "_cc_visibility_template": attr.label(
-            default = Label("//:resource/rosidl_generator_cpp__visibility_control.hpp.in"),
+        "_c_typesupport_introspection_visibility_template": attr.label(
+            default = Label("@rosidl_typesupport_introspection_c//:resource/rosidl_typesupport_introspection_c__visibility_control.h.in"),
             allow_single_file = True,
         ),
-        "_cc_deps": attr.label_list(
+        "_c_deps": attr.label_list(
             default = [
-                Label("@rosidl_runtime_cpp"),
+                Label("@rosidl_typesupport_introspection_c"),
             ],
             providers = [CcInfo],
-        ),  
+        ),
     },
     required_providers = [RosInterfaceInfo],
     required_aspect_providers = [
@@ -111,5 +102,5 @@ rosidl_generator_cpp_aspect = aspect(
         [RosTypeDescriptionInfo],
         [RosCBindingsInfo],
     ],
-    provides = [RosCcBindingsInfo],
+    provides = [RosCTypesupportIntrospectionInfo],
 )
