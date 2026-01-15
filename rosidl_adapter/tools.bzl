@@ -157,7 +157,7 @@ def _get_parent_dir(path):
     return "/".join(path.split("/")[:-1])
 
 # Merge headers, sources and deps into a CcInfo provider.
-def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], deps = []):
+def generate_compilation_information(ctx, name, hdrs, srcs, library_name = None, link_deps_statically = False, include_dirs = [], deps = []):
     # Query for the current CC toolchain and feature set.
     cc_toolchain = find_cc_toolchain(ctx)
 
@@ -203,23 +203,25 @@ def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], d
         linking_context = linking_context,
     )
 
-    # Generate the linking outputs.
+    # Create a readable output product name.
+    if not library_name:
+        library_name = "lib{}.so".format(name)
+    dynamic_library = ctx.actions.declare_file(library_name)
+
+    # Generate the linking outputs -- this replicates the pattern of building dynamic
+    # libraries as cc_binary() with link_shared=True. The reason we do this is to be
+    # guaranteed that the resulting library is named in a controlled way, bypassing
+    # the Bazel namespace mangling, which breaks dlopen().
     linking_outputs = cc_common.link(
-        name = "{}_lib".format(name),
+        name = library_name,
         actions = ctx.actions,
         feature_configuration = feature_configuration,
         cc_toolchain = cc_toolchain,
-        output_type = "dynamic_library",
-        linking_contexts = [linking_context],
+        output_type = "executable",
+        linking_contexts = [linking_context] + [dep.linking_context for dep in deps],
         link_deps_statically = False,  # avoid enormous per-message libs
-    )
-
-    # Create a readable output product name.
-    dynamic_library = ctx.actions.declare_file("lib{}.so".format(name))
-    ctx.actions.symlink(
-        output = dynamic_library,
-        target_file = linking_outputs.library_to_link.dynamic_library,
+        user_link_flags = ["-shared"] # don't look for a main entry point
     )
 
     # Return everything needed to manage compilation
-    return cc_info, dynamic_library
+    return cc_info, [linking_outputs.executable]

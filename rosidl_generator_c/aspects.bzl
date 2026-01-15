@@ -51,7 +51,7 @@ def _rosidl_generator_c_aspect_impl(target, ctx):
             deps.append(dep[RosCBindingsInfo].cc_info)
 
     # Assemble the CcInfo provider.
-    cc_info, dynamic_library = generate_compilation_information(
+    cc_info, dynamic_libraries = generate_compilation_information(
         ctx = ctx,
         name = "{}__{}__{}__rosidl_generator_c".format(
             target[RosIdlInfo].package_name,
@@ -69,7 +69,7 @@ def _rosidl_generator_c_aspect_impl(target, ctx):
         RosCBindingsInfo(
             cc_info = cc_info,
             dynamic_libraries = depset(
-                direct = [dynamic_library],
+                direct = dynamic_libraries,
                 transitive = [
                     dep[RosCBindingsInfo].dynamic_libraries
                     for dep in ctx.rule.attr.deps

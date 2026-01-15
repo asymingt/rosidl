@@ -44,7 +44,7 @@ def _rosidl_typesupport_introspection_c_aspect_impl(target, ctx):
             deps.append(dep[RosCTypesupportIntrospectionInfo].cc_info)
     deps.append(target[RosCBindingsInfo].cc_info)
 
-    cc_info, dynamic_library = generate_compilation_information(
+    cc_info, dynamic_libraries = generate_compilation_information(
         ctx = ctx,
         name = "{}__{}__{}__rosidl_typesupport_introspection_c".format(
             target[RosIdlInfo].package_name,
@@ -61,7 +61,7 @@ def _rosidl_typesupport_introspection_c_aspect_impl(target, ctx):
         RosCTypesupportIntrospectionInfo(
             cc_info = cc_info,
             dynamic_libraries = depset(
-                direct = [dynamic_library],
+                direct = dynamic_libraries,
                 transitive = [
                     dep[RosCTypesupportIntrospectionInfo].dynamic_libraries
                     for dep in ctx.rule.attr.deps
