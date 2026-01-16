@@ -220,7 +220,7 @@ def generate_compilation_information(ctx, name, hdrs, srcs, library_name = None,
         output_type = "executable",
         linking_contexts = [linking_context] + [dep.linking_context for dep in deps],
         link_deps_statically = False,  # avoid enormous per-message libs
-        user_link_flags = ["-shared"] # don't look for a main entry point
+        user_link_flags = ["-shared"],  # don't look for a main entry point
     )
 
     # Return everything needed to manage compilation
