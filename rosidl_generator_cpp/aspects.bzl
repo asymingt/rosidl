@@ -1,4 +1,3 @@
-
 # Copyright 2025 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,17 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:defs.bzl", "CcInfo")
-load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
-load("@rosidl_cmake//:types.bzl", "RosInterfaceInfo")
+load("@rosidl_adapter//:tools.bzl", "generate_compilation_information", "generate_sources")
 load("@rosidl_adapter//:types.bzl", "RosIdlInfo")
-load("@rosidl_adapter//:tools.bzl", "generate_sources", "generate_compilation_information")
+load("@rosidl_cmake//:types.bzl", "RosInterfaceInfo")
 load("@rosidl_generator_c//:types.bzl", "RosCBindingsInfo")
 load("@rosidl_generator_type_description//:types.bzl", "RosTypeDescriptionInfo")
+load("@rules_cc//cc:defs.bzl", "CcInfo")
+load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
 load(":types.bzl", "RosCcBindingsInfo")
 
 def _rosidl_generator_cpp_aspect_impl(target, ctx):
-
     # Generate source files
     hdrs, srcs, include_dirs = generate_sources(
         target = target,
@@ -52,13 +50,13 @@ def _rosidl_generator_cpp_aspect_impl(target, ctx):
     deps.append(target[RosCBindingsInfo].cc_info)
 
     # Assemble the CcInfo provider.
-    cc_info, dynamic_libraries = generate_compilation_information(
+    cc_info, dynamic_library = generate_compilation_information(
         ctx = ctx,
         name = "{}__{}__{}__rosidl_generator_cpp".format(
             target[RosIdlInfo].package_name,
             target[RosIdlInfo].interface_type,
             target[RosIdlInfo].interface_code,
-        ),        
+        ),
         hdrs = hdrs,
         srcs = srcs,
         deps = deps,
@@ -70,13 +68,13 @@ def _rosidl_generator_cpp_aspect_impl(target, ctx):
         RosCcBindingsInfo(
             cc_info = cc_info,
             dynamic_libraries = depset(
-                direct = dynamic_libraries,
+                direct = [dynamic_library],
                 transitive = [
                     dep[RosCcBindingsInfo].dynamic_libraries
                     for dep in ctx.rule.attr.deps
                     if RosCcBindingsInfo in dep
                 ],
-            ),        
+            ),
         ),
     ]
 
@@ -103,7 +101,7 @@ rosidl_generator_cpp_aspect = aspect(
                 Label("@rosidl_runtime_cpp"),
             ],
             providers = [CcInfo],
-        ),  
+        ),
     },
     required_providers = [RosInterfaceInfo],
     required_aspect_providers = [

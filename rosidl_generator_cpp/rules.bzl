@@ -51,7 +51,9 @@ def _cc_ros_library(ctx):
             if provider in dep:
                 direct_cc_infos.append(dep[provider].cc_info)
                 for file in dep[provider].dynamic_libraries.to_list():
-                    symlinks["lib" + "/" + file.basename] = file
+                    unmangled = file.basename.replace("_S", "/").replace("_U", "_")
+                    unmangled = unmangled[unmangled.rfind('/') + 1:]
+                    symlinks["lib" + "/" + unmangled] = file  
 
     # Package up the CcInfo
     cc_info = cc_common.merge_cc_infos(direct_cc_infos = direct_cc_infos)

@@ -157,7 +157,7 @@ def _get_parent_dir(path):
     return "/".join(path.split("/")[:-1])
 
 # Merge headers, sources and deps into a CcInfo provider.
-def generate_compilation_information(ctx, name, hdrs, srcs, library_name = None, link_deps_statically = False, include_dirs = [], deps = []):
+def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], deps = []):
     # Query for the current CC toolchain and feature set.
     cc_toolchain = find_cc_toolchain(ctx)
 
@@ -169,59 +169,48 @@ def generate_compilation_information(ctx, name, hdrs, srcs, library_name = None,
         unsupported_features = ctx.disabled_features,
     )
 
-    # Get a compilation context.
+    # Get a compilation context
     (compilation_context, compilation_outputs) = cc_common.compile(
+        name = name + "_compile",
         actions = ctx.actions,
         feature_configuration = feature_configuration,
         cc_toolchain = cc_toolchain,
         srcs = srcs,
         public_hdrs = hdrs,
         compilation_contexts = [dep.compilation_context for dep in deps],
-        name = "{}_src".format(name),
         includes = include_dirs,
     )
 
-    # Get a linking context.
-    if srcs:
-        linking_context, _ = cc_common.create_linking_context_from_compilation_outputs(
-            actions = ctx.actions,
-            feature_configuration = feature_configuration,
-            cc_toolchain = cc_toolchain,
-            compilation_outputs = compilation_outputs,
-            linking_contexts = [dep.linking_context for dep in deps],
-            name = "{}_link".format(name),
-            alwayslink = True,
-        )
-    else:
-        linking_context = cc_common.merge_linking_contexts(
-            linking_contexts = [dep.linking_context for dep in deps],
-        )
+    # Define how we want linking to be done
+    linking_outputs = cc_common.link(
+        name = name,
+        actions = ctx.actions,
+        feature_configuration = feature_configuration,
+        cc_toolchain = cc_toolchain,
+        output_type = "dynamic_library",
+        compilation_outputs = compilation_outputs,
+        linking_contexts = [dep.linking_context for dep in deps],
+        link_deps_statically = False,  # avoid enormous per-message libs
+    )
 
-    # Assemble and return the CcInfo object.
+    # Generate a linking context.
+    linker_input = []
+    if linking_outputs.library_to_link:
+        linker_input.append(
+            cc_common.create_linker_input(
+                owner = ctx.label,
+                libraries = depset([linking_outputs.library_to_link]),
+            )
+        )
+    linking_context = cc_common.create_linking_context(
+        linker_inputs = depset(linker_input),
+    )
+
+    # Preparea CcInfo from the compilation and linking context.
     cc_info = CcInfo(
         compilation_context = compilation_context,
         linking_context = linking_context,
     )
 
-    # Create a readable output product name.
-    if not library_name:
-        library_name = "lib{}.so".format(name)
-    dynamic_library = ctx.actions.declare_file(library_name)
-
-    # Generate the linking outputs -- this replicates the pattern of building dynamic
-    # libraries as cc_binary() with link_shared=True. The reason we do this is to be
-    # guaranteed that the resulting library is named in a controlled way, bypassing
-    # the Bazel namespace mangling, which breaks dlopen().
-    linking_outputs = cc_common.link(
-        name = library_name,
-        actions = ctx.actions,
-        feature_configuration = feature_configuration,
-        cc_toolchain = cc_toolchain,
-        output_type = "executable",
-        linking_contexts = [linking_context] + [dep.linking_context for dep in deps],
-        link_deps_statically = False,  # avoid enormous per-message libs
-        user_link_flags = ["-shared"],  # don't look for a main entry point
-    )
-
-    # Return everything needed to manage compilation
-    return cc_info, [linking_outputs.executable]
+    # Return the CcInfo and the path to the resulting dynamic library.
+    return cc_info, linking_outputs.library_to_link.dynamic_library

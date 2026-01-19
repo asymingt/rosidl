@@ -21,7 +21,6 @@ load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolcha
 load(":types.bzl", "RosCBindingsInfo")
 
 def _rosidl_generator_c_aspect_impl(target, ctx):
-
     hdrs, srcs, include_dirs = generate_sources(
         target = target,
         ctx = ctx,
@@ -51,13 +50,13 @@ def _rosidl_generator_c_aspect_impl(target, ctx):
             deps.append(dep[RosCBindingsInfo].cc_info)
 
     # Assemble the CcInfo provider.
-    cc_info, dynamic_libraries = generate_compilation_information(
+    cc_info, dynamic_library = generate_compilation_information(
         ctx = ctx,
         name = "{}__{}__{}__rosidl_generator_c".format(
             target[RosIdlInfo].package_name,
             target[RosIdlInfo].interface_type,
             target[RosIdlInfo].interface_code,
-        ),        
+        ),
         hdrs = hdrs,
         srcs = srcs,
         deps = deps,
@@ -69,13 +68,13 @@ def _rosidl_generator_c_aspect_impl(target, ctx):
         RosCBindingsInfo(
             cc_info = cc_info,
             dynamic_libraries = depset(
-                direct = dynamic_libraries,
+                direct = [dynamic_library],
                 transitive = [
                     dep[RosCBindingsInfo].dynamic_libraries
                     for dep in ctx.rule.attr.deps
                     if RosCBindingsInfo in dep
                 ],
-            ),        
+            ),
         ),
     ]
 
