@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("@rosidl_adapter//:aspects.bzl", "rosidl_adapter_aspect")
+load("@rosidl_adapter//:tools.bzl", "unmangle_library_name")
 load("@rosidl_adapter_proto//:aspects.bzl", "rosidl_adapter_proto_aspect")
 load("@rosidl_cmake//:types.bzl", "RosInterfaceInfo")
 load("@rosidl_generator_c//:aspects.bzl", "rosidl_generator_c_aspect")
@@ -32,7 +33,7 @@ load(":types.bzl", "RosCcBindingsInfo")
 
 # We need to make sure the final libraries from these providers end up
 # in the runfiles, so that they can be loaded dynamically via dlopen()
-CC_INFO_PROVIDERS = [
+TYPESUPPORT_PROVIDERS = [
     RosCBindingsInfo,
     RosCcBindingsInfo,
     RosCcTypesupportIntrospectionInfo,
@@ -47,24 +48,25 @@ def _cc_ros_library(ctx):
     symlinks = {}
     direct_cc_infos = []
     for dep in ctx.attr.deps:
-        for provider in CC_INFO_PROVIDERS:
+        for provider in TYPESUPPORT_PROVIDERS:
             if provider in dep:
                 direct_cc_infos.append(dep[provider].cc_info)
                 for file in dep[provider].dynamic_libraries.to_list():
-                    unmangled = file.basename.replace("_S", "/").replace("_U", "_")
-                    unmangled = unmangled[unmangled.rfind('/') + 1:]
-                    symlinks["lib" + "/" + unmangled] = file  
-
-    # Package up the CcInfo
-    cc_info = cc_common.merge_cc_infos(direct_cc_infos = direct_cc_infos)
+                    unmangled_name = unmangle_library_name(file.basename)
+                    symlinks["lib/" + unmangled_name] = file
 
     # Package up the runfiles
     default_info = DefaultInfo(
-        files = depset(direct = symlinks.values()),
-        runfiles = ctx.runfiles(symlinks = symlinks)
+        runfiles = ctx.runfiles(
+            files = symlinks.values(),
+            symlinks = symlinks,
+        )
     )
     
-    return [cc_info, default_info]
+    # Package up the CcInfo
+    cc_info = cc_common.merge_cc_infos(direct_cc_infos = direct_cc_infos)
+
+    return [default_info, cc_info]
 
 cc_ros_library = rule(
     implementation = _cc_ros_library,

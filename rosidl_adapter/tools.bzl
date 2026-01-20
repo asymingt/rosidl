@@ -157,7 +157,7 @@ def _get_parent_dir(path):
     return "/".join(path.split("/")[:-1])
 
 # Merge headers, sources and deps into a CcInfo provider.
-def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], deps = []):
+def generate_compilation_information(ctx, name, hdrs, srcs, link_deps_statically = False, include_dirs = [], deps = []):
     # Query for the current CC toolchain and feature set.
     cc_toolchain = find_cc_toolchain(ctx)
 
@@ -190,7 +190,7 @@ def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], d
         output_type = "dynamic_library",
         compilation_outputs = compilation_outputs,
         linking_contexts = [dep.linking_context for dep in deps],
-        link_deps_statically = False,  # avoid enormous per-message libs
+        link_deps_statically = True,  # avoid enormous per-message libs
     )
 
     # Generate a linking context.
@@ -200,7 +200,7 @@ def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], d
             cc_common.create_linker_input(
                 owner = ctx.label,
                 libraries = depset([linking_outputs.library_to_link]),
-            )
+            ),
         )
     linking_context = cc_common.create_linking_context(
         linker_inputs = depset(linker_input),
@@ -214,3 +214,8 @@ def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], d
 
     # Return the CcInfo and the path to the resulting dynamic library.
     return cc_info, linking_outputs.library_to_link.dynamic_library
+
+def unmangle_library_name(mangled_library_name):
+    unmangled = mangled_library_name.replace("_S", "/").replace("_U", "_")
+    unmangled = unmangled[unmangled.rfind("/") + 1:]
+    return unmangled
