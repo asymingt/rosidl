@@ -157,7 +157,7 @@ def _get_parent_dir(path):
     return "/".join(path.split("/")[:-1])
 
 # Merge headers, sources and deps into a CcInfo provider.
-def generate_compilation_information(ctx, name, hdrs, srcs, link_deps_statically = False, include_dirs = [], deps = []):
+def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], deps = []):
     # Query for the current CC toolchain and feature set.
     cc_toolchain = find_cc_toolchain(ctx)
 
@@ -202,13 +202,13 @@ def generate_compilation_information(ctx, name, hdrs, srcs, link_deps_statically
             cc_common.create_linker_input(
                 owner = ctx.label,
                 libraries = depset([linking_outputs.library_to_link]),
-            ),
+            )
         )
     linking_context = cc_common.merge_linking_contexts(
         linking_contexts = [dep.linking_context for dep in deps] + [
             cc_common.create_linking_context(
                 linker_inputs = depset(linker_input),
-            ),
+            )
         ],
     )
 

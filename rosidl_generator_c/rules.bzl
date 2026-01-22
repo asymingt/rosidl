@@ -33,42 +33,16 @@ load("@rules_cc//cc:defs.bzl", "CcInfo", "cc_common")
 load(":aspects.bzl", "rosidl_generator_c_aspect")
 load(":types.bzl", "RosCBindingsInfo")
 
-# We need to make sure the final libraries from these providers end up
-# in the runfiles, so that they can be loaded dynamically via dlopen()
-TYPESUPPORT_PROVIDERS = [
-    RosCBindingsInfo,
-    RosCcBindingsInfo,
-    RosCcTypesupportFastRTPSInfo,
-    RosCTypesupportIntrospectionInfo,
-    RosCTypesupportFastRTPSInfo,
-    RosCTypesupportProtobufInfo,
-    RosCTypesupportInfo,
-]
-
 def _c_ros_library(ctx):
-    # Move all the dynamic libraries into one search location.
-    symlinks = {}
-    direct_cc_infos = []
-    for dep in ctx.attr.deps:
-        for provider in TYPESUPPORT_PROVIDERS:
-            if provider in dep:
-                direct_cc_infos.append(dep[provider].cc_info)
-                for file in dep[provider].dynamic_libraries.to_list():
-                    unmangled_name = unmangle_library_name(file.basename)
-                    symlinks["lib/" + unmangled_name] = file
-
-    # Package up the runfiles
-    default_info = DefaultInfo(
-        runfiles = ctx.runfiles(
-            files = symlinks.values(),
-            symlinks = symlinks,
-        ),
+    # RosCTypesupportInfo contains all deps for the entire tree.
+    cc_info = cc_common.merge_cc_infos(
+        direct_cc_infos = [
+            dep[RosCTypesupportInfo].cc_info
+            for dep in ctx.attr.deps
+            if RosCTypesupportInfo in dep
+        ]
     )
-
-    # Package up the CcInfo
-    cc_info = cc_common.merge_cc_infos(direct_cc_infos = direct_cc_infos)
-
-    return [default_info, cc_info]
+    return [cc_info]
 
 c_ros_library = rule(
     implementation = _c_ros_library,
@@ -93,5 +67,5 @@ c_ros_library = rule(
             allow_files = False,
         ),
     },
-    provides = [CcInfo, DefaultInfo],
+    provides = [CcInfo],
 )
