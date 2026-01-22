@@ -19,16 +19,16 @@ load("@rosidl_cmake//:types.bzl", "RosInterfaceInfo")
 load("@rosidl_generator_cpp//:aspects.bzl", "rosidl_generator_cpp_aspect")
 load("@rosidl_generator_cpp//:types.bzl", "RosCcBindingsInfo")
 load("@rosidl_generator_type_description//:aspects.bzl", "rosidl_generator_type_description_aspect")
-load("@rosidl_typesupport_introspection_c//:aspects.bzl", "rosidl_typesupport_introspection_c_aspect")
-load("@rosidl_typesupport_introspection_c//:types.bzl", "RosCTypesupportIntrospectionInfo")
+load("@rosidl_typesupport_c//:aspects.bzl", "rosidl_typesupport_c_aspect")
+load("@rosidl_typesupport_c//:types.bzl", "RosCTypesupportInfo")
 load("@rosidl_typesupport_fastrtps_c//:aspects.bzl", "rosidl_typesupport_fastrtps_c_aspect")
 load("@rosidl_typesupport_fastrtps_c//:types.bzl", "RosCTypesupportFastRTPSInfo")
 load("@rosidl_typesupport_fastrtps_cpp//:aspects.bzl", "rosidl_typesupport_fastrtps_cpp_aspect")
 load("@rosidl_typesupport_fastrtps_cpp//:types.bzl", "RosCcTypesupportFastRTPSInfo")
+load("@rosidl_typesupport_introspection_c//:aspects.bzl", "rosidl_typesupport_introspection_c_aspect")
+load("@rosidl_typesupport_introspection_c//:types.bzl", "RosCTypesupportIntrospectionInfo")
 load("@rosidl_typesupport_protobuf_c//:aspects.bzl", "rosidl_typesupport_protobuf_c_aspect")
 load("@rosidl_typesupport_protobuf_c//:types.bzl", "RosCTypesupportProtobufInfo")
-load("@rosidl_typesupport_c//:aspects.bzl", "rosidl_typesupport_c_aspect")
-load("@rosidl_typesupport_c//:types.bzl", "RosCTypesupportInfo")
 load("@rules_cc//cc:defs.bzl", "CcInfo", "cc_common")
 load(":aspects.bzl", "rosidl_generator_c_aspect")
 load(":types.bzl", "RosCBindingsInfo")
@@ -39,7 +39,6 @@ TYPESUPPORT_PROVIDERS = [
     RosCBindingsInfo,
     RosCcBindingsInfo,
     RosCcTypesupportFastRTPSInfo,
-    RosCcTypesupportFastRTPSInfo,
     RosCTypesupportIntrospectionInfo,
     RosCTypesupportFastRTPSInfo,
     RosCTypesupportProtobufInfo,
@@ -47,7 +46,6 @@ TYPESUPPORT_PROVIDERS = [
 ]
 
 def _c_ros_library(ctx):
-
     # Move all the dynamic libraries into one search location.
     symlinks = {}
     direct_cc_infos = []
@@ -57,19 +55,19 @@ def _c_ros_library(ctx):
                 direct_cc_infos.append(dep[provider].cc_info)
                 for file in dep[provider].dynamic_libraries.to_list():
                     unmangled_name = unmangle_library_name(file.basename)
-                    symlinks["lib/" + unmangled_name] = file   
+                    symlinks["lib/" + unmangled_name] = file
 
     # Package up the runfiles
     default_info = DefaultInfo(
         runfiles = ctx.runfiles(
             files = symlinks.values(),
             symlinks = symlinks,
-        )
+        ),
     )
 
     # Package up the CcInfo
     cc_info = cc_common.merge_cc_infos(direct_cc_infos = direct_cc_infos)
-    
+
     return [default_info, cc_info]
 
 c_ros_library = rule(

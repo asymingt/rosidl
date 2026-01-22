@@ -181,7 +181,8 @@ def generate_compilation_information(ctx, name, hdrs, srcs, link_deps_statically
         includes = include_dirs,
     )
 
-    # Define how we want linking to be done
+    # Define how we want linking to be done. Specifically, we want a dynamic
+    # # library with a controlled name, so that it can be dl-opened.
     linking_outputs = cc_common.link(
         name = name,
         actions = ctx.actions,
@@ -190,10 +191,11 @@ def generate_compilation_information(ctx, name, hdrs, srcs, link_deps_statically
         output_type = "dynamic_library",
         compilation_outputs = compilation_outputs,
         linking_contexts = [dep.linking_context for dep in deps],
-        link_deps_statically = True,  # avoid enormous per-message libs
+        link_deps_statically = False,  # avoid enormous per-message libs
     )
 
-    # Generate a linking context.
+    # Generate a linking context that bundles the desired shared library with
+    # its upstream dependencies.
     linker_input = []
     if linking_outputs.library_to_link:
         linker_input.append(
@@ -202,8 +204,12 @@ def generate_compilation_information(ctx, name, hdrs, srcs, link_deps_statically
                 libraries = depset([linking_outputs.library_to_link]),
             ),
         )
-    linking_context = cc_common.create_linking_context(
-        linker_inputs = depset(linker_input),
+    linking_context = cc_common.merge_linking_contexts(
+        linking_contexts = [dep.linking_context for dep in deps] + [
+            cc_common.create_linking_context(
+                linker_inputs = depset(linker_input),
+            ),
+        ],
     )
 
     # Preparea CcInfo from the compilation and linking context.

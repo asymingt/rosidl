@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rosidl_cmake//:types.bzl", "RosInterfaceInfo")
-load("@rosidl_adapter//:types.bzl", "RosIdlInfo")
 load("@rosidl_adapter//:tools.bzl", "idl_tuple_from_path", "pkg_name_and_base_from_path")
+load("@rosidl_adapter//:types.bzl", "RosIdlInfo")
+load("@rosidl_cmake//:types.bzl", "RosInterfaceInfo")
 load(":types.bzl", "RosTypeDescriptionInfo")
 
 def _rosidl_generator_type_description_aspect_impl(target, ctx):
@@ -35,7 +35,7 @@ def _rosidl_generator_type_description_aspect_impl(target, ctx):
             package_name,
             message_type,
             "{}.json".format(message_name),
-        )
+        ),
     )
 
     # Get all dependency and include paths.
@@ -49,7 +49,8 @@ def _rosidl_generator_type_description_aspect_impl(target, ctx):
 
     # The first output file is the JSON file used as args to the generator.
     args_file = ctx.actions.declare_file(
-        "{}/{}_{}_type_description.json".format(package_name, message_type, message_name))
+        "{}/{}_{}_TypeDescription.json".format(package_name, message_type, message_name),
+    )
     ctx.actions.write(
         args_file,
         json.encode(
@@ -58,9 +59,9 @@ def _rosidl_generator_type_description_aspect_impl(target, ctx):
                 idl_tuples = [idl_tuple_from_path(idl_file.path)],
                 output_dir = args_file.dirname,
                 template_dir = template_files[0].dirname,
-                include_paths = include_paths
-            )
-        )
+                include_paths = include_paths,
+            ),
+        ),
     )
 
     # Run the action to generate the files
@@ -97,9 +98,8 @@ def _rosidl_generator_type_description_aspect_impl(target, ctx):
                     if RosTypeDescriptionInfo in dep
                 ],
             ),
-        )
+        ),
     ]
-
 
 rosidl_generator_type_description_aspect = aspect(
     implementation = _rosidl_generator_type_description_aspect_impl,
