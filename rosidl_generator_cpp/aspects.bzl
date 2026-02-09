@@ -70,11 +70,12 @@ def _rosidl_generator_cpp_aspect_impl(target, ctx):
             dynamic_libraries = depset(
                 direct = [dynamic_library],
                 transitive = [
-                    dep[RosCcBindingsInfo].dynamic_libraries
+                    dep[RosCBindingsInfo].dynamic_libraries
                     for dep in ctx.rule.attr.deps
-                    if RosCcBindingsInfo in dep
+                    if RosCBindingsInfo in dep
                 ],
             ),
+            linker_inputs = cc_info.linking_context.linker_inputs
         ),
     ]
 

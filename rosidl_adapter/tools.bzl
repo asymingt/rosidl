@@ -157,7 +157,7 @@ def _get_parent_dir(path):
     return "/".join(path.split("/")[:-1])
 
 # Merge headers, sources and deps into a CcInfo provider.
-def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], deps = []):
+def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], deps = [], link_deps_statically = False):
     # Query for the current CC toolchain and feature set.
     cc_toolchain = find_cc_toolchain(ctx)
 
@@ -181,8 +181,19 @@ def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], d
         includes = include_dirs,
     )
 
+    # We need a linking context so that consumers can link styaticlly if needed
+    linking_context, _ = cc_common.create_linking_context_from_compilation_outputs(
+        actions = ctx.actions,
+        feature_configuration = feature_configuration,
+        cc_toolchain = cc_toolchain,
+        compilation_outputs = compilation_outputs,
+        linking_contexts = [dep.linking_context for dep in deps],
+        name = name + "_link",
+        alwayslink = True,
+    )
+
     # Define how we want linking to be done. Specifically, we want a dynamic
-    # # library with a controlled name, so that it can be dl-opened.
+    # library with a controlled name, so that it can be dl-opened.
     linking_outputs = cc_common.link(
         name = name,
         actions = ctx.actions,
@@ -191,25 +202,7 @@ def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], d
         output_type = "dynamic_library",
         compilation_outputs = compilation_outputs,
         linking_contexts = [dep.linking_context for dep in deps],
-        link_deps_statically = False,  # avoid enormous per-message libs
-    )
-
-    # Generate a linking context that bundles the desired shared library with
-    # its upstream dependencies.
-    linker_input = []
-    if linking_outputs.library_to_link:
-        linker_input.append(
-            cc_common.create_linker_input(
-                owner = ctx.label,
-                libraries = depset([linking_outputs.library_to_link]),
-            )
-        )
-    linking_context = cc_common.merge_linking_contexts(
-        linking_contexts = [dep.linking_context for dep in deps] + [
-            cc_common.create_linking_context(
-                linker_inputs = depset(linker_input),
-            )
-        ],
+        link_deps_statically = link_deps_statically,  # avoid enormous per-message libs
     )
 
     # Preparea CcInfo from the compilation and linking context.
@@ -219,9 +212,33 @@ def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], d
     )
 
     # Return the CcInfo and the path to the resulting dynamic library.
-    return cc_info, linking_outputs.library_to_link.dynamic_library
+    return cc_info, linking_outputs.library_to_link.resolved_symlink_dynamic_library
 
-def unmangle_library_name(mangled_library_name):
-    unmangled = mangled_library_name.replace("_S", "/").replace("_U", "_")
-    unmangled = unmangled[unmangled.rfind("/") + 1:]
-    return unmangled
+def extract_dynamic_library_runfiles_for_provider(ctx, provider_list):
+    transitive_dynamic_libraries_symlinks = {}
+    transitive_dynamic_libraries = []
+    for provider in provider_list:
+        for dep in ctx.attr.deps:
+            if provider in dep:
+                for linker_input in dep[provider].linker_inputs.to_list():
+                    transitive_dynamic_libraries.extend([
+                        library.dynamic_library
+                        for library in linker_input.libraries
+                    ])
+                for file in dep[provider].dynamic_libraries.to_list():
+                    unmangled = file.basename
+                    unmangled = unmangled.replace("_S", "/").replace("_U", "_")
+                    unmangled = unmangled[unmangled.rfind("/") + 1:]
+                    transitive_dynamic_libraries_symlinks[unmangled] = file                
+                    transitive_dynamic_libraries.append(file)
+    return DefaultInfo(
+        runfiles = ctx.runfiles(
+            transitive_files = depset(
+                transitive = [
+                    depset(transitive_dynamic_libraries),
+                ],
+            ),
+            symlinks = transitive_dynamic_libraries_symlinks
+        )
+    )
+

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rosidl_adapter//:aspects.bzl", "rosidl_adapter_aspect")
-load("@rosidl_adapter//:tools.bzl", "unmangle_library_name")
+load("@rosidl_adapter//:tools.bzl", "extract_dynamic_library_runfiles_for_provider")
 load("@rosidl_adapter_proto//:aspects.bzl", "rosidl_adapter_proto_aspect")
 load("@rosidl_cmake//:types.bzl", "RosInterfaceInfo")
 load("@rosidl_generator_cpp//:aspects.bzl", "rosidl_generator_cpp_aspect")
@@ -33,16 +33,29 @@ load("@rules_cc//cc:defs.bzl", "CcInfo", "cc_common")
 load(":aspects.bzl", "rosidl_generator_c_aspect")
 load(":types.bzl", "RosCBindingsInfo")
 
+DYNAMIC_TYPESUPPORTS = [
+    RosCcTypesupportFastRTPSInfo,
+    RosCTypesupportFastRTPSInfo,
+    RosCTypesupportIntrospectionInfo,
+    RosCTypesupportProtobufInfo,
+]
+
 def _c_ros_library(ctx):
-    # RosCTypesupportInfo contains all deps for the entire tree.
-    cc_info = cc_common.merge_cc_infos(
-        direct_cc_infos = [
-            dep[RosCTypesupportInfo].cc_info
-            for dep in ctx.attr.deps
-            if RosCTypesupportInfo in dep
-        ]
-    )
-    return [cc_info]
+    default_info = extract_dynamic_library_runfiles_for_provider(ctx, DYNAMIC_TYPESUPPORTS)
+    direct_cc_infos = [
+        dep[RosCTypesupportInfo].cc_info
+        for dep in ctx.attr.deps
+        if RosCTypesupportInfo in dep
+    ]
+    if ctx.attr.static_typesupport:
+        for provider in DYNAMIC_TYPESUPPORTS:
+            direct_cc_infos.extend([
+                dep[provider].cc_info
+                for dep in ctx.attr.deps
+                if provider in dep
+            ])
+    cc_info = cc_common.merge_cc_infos(direct_cc_infos = direct_cc_infos)
+    return [default_info, cc_info]
 
 c_ros_library = rule(
     implementation = _c_ros_library,
@@ -53,10 +66,10 @@ c_ros_library = rule(
                 rosidl_adapter_aspect,
                 rosidl_generator_type_description_aspect,
                 rosidl_adapter_proto_aspect,
-                # Generators
+                # Bindings
                 rosidl_generator_c_aspect,
                 rosidl_generator_cpp_aspect,
-                # C++ typesupports
+                # Typesupports
                 rosidl_typesupport_introspection_c_aspect,
                 rosidl_typesupport_fastrtps_cpp_aspect,
                 rosidl_typesupport_fastrtps_c_aspect,
@@ -66,6 +79,7 @@ c_ros_library = rule(
             providers = [RosInterfaceInfo],
             allow_files = False,
         ),
+        "static_typesupport": attr.bool(default = True),
     },
-    provides = [CcInfo],
+    provides = [DefaultInfo, CcInfo],
 )
