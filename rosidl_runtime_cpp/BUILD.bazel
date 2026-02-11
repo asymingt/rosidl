@@ -60,6 +60,7 @@ cc_library(
         ],
         local_defines = ["ROS_PACKAGE_NAME=\\\"rosidl_runtime_cpp\\\""],
         timeout = "moderate",
+        tags = ["exclusive"],
     )
     for name in [
         "benchmark_bounded_vector",

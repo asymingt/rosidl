@@ -67,6 +67,7 @@ cc_library(
         ],
         local_defines = ["ROS_PACKAGE_NAME=\\\"rosidl_runtime_c\\\""],
         timeout = "moderate",
+        tags = ["exclusive"],
     )
     for name in [
         "benchmark_string_conversion",
