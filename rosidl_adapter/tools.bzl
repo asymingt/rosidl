@@ -157,7 +157,7 @@ def _get_parent_dir(path):
     return "/".join(path.split("/")[:-1])
 
 # Merge headers, sources and deps into a CcInfo provider.
-def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], deps = [], link_deps_statically = False):
+def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], deps = [], link_deps_statically = True):
     # Query for the current CC toolchain and feature set.
     cc_toolchain = find_cc_toolchain(ctx)
 
@@ -190,6 +190,7 @@ def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], d
         linking_contexts = [dep.linking_context for dep in deps],
         name = name + "_link",
         alwayslink = True,
+        disallow_dynamic_library = True,
     )
 
     # Define how we want linking to be done. Specifically, we want a dynamic
@@ -203,6 +204,7 @@ def generate_compilation_information(ctx, name, hdrs, srcs, include_dirs = [], d
         compilation_outputs = compilation_outputs,
         linking_contexts = [dep.linking_context for dep in deps],
         link_deps_statically = link_deps_statically,  # avoid enormous per-message libs
+        user_link_flags = ["-undefined", "dynamic_lookup"],
     )
 
     # Preparea CcInfo from the compilation and linking context.
@@ -222,15 +224,18 @@ def extract_dynamic_library_runfiles_for_provider(ctx, provider_list):
             if provider in dep:
                 for linker_input in dep[provider].linker_inputs.to_list():
                     transitive_dynamic_libraries.extend([
-                        library.dynamic_library
+                        dynamic_library
                         for library in linker_input.libraries
+                        for dynamic_library in [library.dynamic_library]
+                        if dynamic_library != None
                     ])
                 for file in dep[provider].dynamic_libraries.to_list():
-                    unmangled = file.basename
-                    unmangled = unmangled.replace("_S", "/").replace("_U", "_")
-                    unmangled = unmangled[unmangled.rfind("/") + 1:]
-                    transitive_dynamic_libraries_symlinks[unmangled] = file                
-                    transitive_dynamic_libraries.append(file)
+                    if file != None:
+                        unmangled = file.basename
+                        unmangled = unmangled.replace("_S", "/").replace("_U", "_")
+                        unmangled = unmangled[unmangled.rfind("/") + 1:]
+                        transitive_dynamic_libraries_symlinks[unmangled] = file
+                        transitive_dynamic_libraries.append(file)
     return DefaultInfo(
         runfiles = ctx.runfiles(
             transitive_files = depset(
