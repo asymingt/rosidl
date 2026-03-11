@@ -61,6 +61,7 @@ cc_library(
         timeout = "moderate",
         srcs = ["test/benchmark/{}.cpp".format(name)],
         local_defines = ["ROS_PACKAGE_NAME=\\\"rosidl_runtime_c\\\""],
+        tags = ["manual"],
         deps = [
             ":rosidl_runtime_c",
             "@google_benchmark//:benchmark_main",
