@@ -224,6 +224,7 @@ def extract_dynamic_library_runfiles_for_provider(ctx, provider_list):
                     transitive_dynamic_libraries.extend([
                         library.dynamic_library
                         for library in linker_input.libraries
+                        if library.dynamic_library != None
                     ])
                 for file in dep[provider].dynamic_libraries.to_list():
                     unmangled = file.basename
