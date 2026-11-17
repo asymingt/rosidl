@@ -2,6 +2,43 @@
 Changelog for package rosidl_typesupport_interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+5.3.2 (2026-11-03)
+------------------
+* Remove ament_export_include_directories and ament_export_libraries calls (`#1011 <https://github.com/ros2/rosidl/issues/1011>`_)
+* Use the SPDX identifier Apache-2.0 in license declarations (`#1003 <https://github.com/ros2/rosidl/issues/1003>`_)
+* use C++ 20 in default. (`#976 <https://github.com/ros2/rosidl/issues/976>`_)
+* Contributors: AADITYA007x, Michael Carroll, Tomoya Fujita
+
+5.3.1 (2026-06-05)
+------------------
+
+5.3.0 (2026-05-06)
+------------------
+
+5.2.0 (2026-04-24)
+------------------
+
+5.1.5 (2026-04-24)
+------------------
+
+5.1.4 (2026-04-09)
+------------------
+
+5.1.3 (2026-03-24)
+------------------
+
+5.1.2 (2025-12-09)
+------------------
+
+5.1.1 (2025-11-11)
+------------------
+
+5.1.0 (2025-10-05)
+------------------
+
+5.0.1 (2025-07-29)
+------------------
+
 5.0.0 (2025-07-01)
 ------------------
 * fix cmake <3.10 deprecation (`#875 <https://github.com/ros2/rosidl/issues/875>`_)

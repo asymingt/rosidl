@@ -2,6 +2,52 @@
 Changelog for package rosidl_cmake
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+5.3.2 (2026-11-03)
+------------------
+* fix(rosidl_cmake): prevent typesupport lookup cache collisions (`#1006 <https://github.com/ros2/rosidl/issues/1006>`_)
+* Use rosidl_find_package_idl() to find .idl file paths (`#1013 <https://github.com/ros2/rosidl/issues/1013>`_)
+* Use the SPDX identifier Apache-2.0 in license declarations (`#1003 <https://github.com/ros2/rosidl/issues/1003>`_)
+* Contributors: Esteve Fernandez, Michael Carroll, Nathan Wiebe Neufeldt
+
+5.3.1 (2026-06-05)
+------------------
+
+5.3.0 (2026-05-06)
+------------------
+
+5.2.0 (2026-04-24)
+------------------
+
+5.1.5 (2026-04-24)
+------------------
+* Install interface files to same folder as idl (`#935 <https://github.com/ros2/rosidl/issues/935>`_)
+* Contributors: Tim Wendt
+
+5.1.4 (2026-04-09)
+------------------
+
+5.1.3 (2026-03-24)
+------------------
+* Create an aggregate target for rosidl generated interfaces targets (`#947 <https://github.com/ros2/rosidl//issues/947>`_)
+* Contributors: Emerson Knapp
+
+5.1.2 (2025-12-09)
+------------------
+* Add `rosidl_auto_generate_interfaces` function (`#918 <https://github.com/ros2/rosidl/issues/918>`_)
+* Contributors: Kotaro Yoshimoto
+
+5.1.1 (2025-11-11)
+------------------
+
+5.1.0 (2025-10-05)
+------------------
+* Export typing Information (`#903 <https://github.com/ros2/rosidl/issues/903>`_)
+* remove deprecated rosidl_target_interfaces. (`#898 <https://github.com/ros2/rosidl/issues/898>`_)
+* Contributors: Michael Carlstrom, Tomoya Fujita
+
+5.0.1 (2025-07-29)
+------------------
+
 5.0.0 (2025-07-01)
 ------------------
 * fix cmake <3.10 deprecation (`#875 <https://github.com/ros2/rosidl/issues/875>`_)

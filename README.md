@@ -1,7 +1,7 @@
 # rosidl
 
 ```rosidl``` is one of the ros_core packages.
-See [documentation](https://docs.ros.org/en/rolling/Concepts/About-Internal-Interfaces.html#the-rosidl-repository) for details of this package.
+See [documentation](https://docs.ros.org/en/rolling/ROS-Framework/client-libraries/About-Internal-Interfaces/About-Internal-Interfaces.html#the-rosidl-repository) for details of this package.
 
 ## Packages
 
@@ -13,7 +13,7 @@ See [documentation](https://docs.ros.org/en/rolling/Concepts/About-Internal-Inte
   * Generate the ROS interfaces in C
 * [rosidl_generator_cpp](./rosidl_generator_cpp)
   * Generate the ROS interfaces in C++
-* [rosidl_generator_type_description](./rosidl_generator_type_desrciption)
+* [rosidl_generator_type_description](./rosidl_generator_type_description)
   * Generate SHA256 hash values and ROS 2 interface descriptions for use by other generators
 * [rosidl_parser](./rosidl_parser)
   * Parser for `.idl` ROS interface files
